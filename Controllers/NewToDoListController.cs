@@ -29,6 +29,7 @@ namespace WebApplication2.Controllers
         {
             dbContext.Add(NewTask);
             dbContext.SaveChanges();
+            Console.Write("Hello World");
 
             return Ok("New Task added Successfully");
         }
