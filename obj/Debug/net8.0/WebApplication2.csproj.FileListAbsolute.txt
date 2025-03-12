@@ -262,3 +262,4 @@ C:\Users\visio\source\repos\WebApplication2\WebApplication2\obj\Debug\net8.0\ref
 C:\Users\visio\source\repos\WebApplication2\WebApplication2\obj\Debug\net8.0\WebApplication2.pdb
 C:\Users\visio\source\repos\WebApplication2\WebApplication2\obj\Debug\net8.0\WebApplication2.genruntimeconfig.cache
 C:\Users\visio\source\repos\WebApplication2\WebApplication2\obj\Debug\net8.0\ref\WebApplication2.dll
+c:\Users\visio\source\repos\WebApplication2\WebApplication2\obj\Debug\net8.0\WebApplication2.sourcelink.json
