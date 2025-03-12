@@ -121,7 +121,7 @@ namespace WebApplication2.Controllers
             return NotFound("No Tasks Found ");
         }
 
-         [HttpGet("GetAll")]
+        [HttpGet("GetAll")]
         public IActionResult GetAll( )
         {
             var alltasks=dbContext.NewToDoItem.Include( t => t.ListOfTasks).ToList();
