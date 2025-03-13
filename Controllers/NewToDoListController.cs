@@ -124,7 +124,7 @@ namespace WebApplication2.Controllers
         [HttpGet("GetAll")]
         public IActionResult GetAll( )
         {
-            var alltasks=dbContext.NewToDoItem.Include( t => t.ListOfTasks).ToList();
+            var alltasks=dbContext.NewToDoItem.Where(t => t.IsDeleted ==false).Include( t => t.ListOfTasks).ToList();
             return Ok(alltasks);
         }
     }
