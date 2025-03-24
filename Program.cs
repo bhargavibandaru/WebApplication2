@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.Blazor;
 using WebApplication2.Context;
 
 var builder = WebApplication.CreateBuilder(args);

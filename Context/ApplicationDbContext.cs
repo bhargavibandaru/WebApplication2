@@ -20,6 +20,7 @@ namespace WebApplication2.Context
             modelBuilder.Entity<NewToDoItem>().ToTable("newtodoitem");
             modelBuilder.Entity<Tasks>().ToTable("tasks");
         }
+        
 
     }
 }
