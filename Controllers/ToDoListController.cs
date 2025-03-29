@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -27,17 +28,59 @@ namespace WebApplication2.Controllers
 
         public IActionResult CreateNewtask([FromBody] NewToDoItem NewTask)
         {
+            var newTask = new NewToDoItem
+            {
+                NewToDoItemId = NewTask.NewToDoItemId,
+                OwnerName = NewTask.OwnerName,
+                ToDoListName = NewTask.ToDoListName,
+                IsDeleted = NewTask.IsDeleted,
+                CreatedOn = NewTask.CreatedOn,
+                ListOfTasks = new List<Tasks>()
 
-            dbContext.Add(NewTask);
+            };
+            foreach (var t in NewTask.ListOfTasks)
+            {
+                var subTask = new Tasks
+                {
+                    TaskId = t.TaskId,
+                    NewToDoItemId = NewTask.NewToDoItemId,
+                    Task = t.Task,
+                    Status = t.Status,
+                    DueDate = t.DueDate,
+                    isTaskDeleted = t.isTaskDeleted
+                };
+                newTask.ListOfTasks.Add(subTask);
+            }
+
+
+            dbContext.Add(newTask);
             dbContext.SaveChanges();
 
-            return Ok("New Task added Successfully");
+            return Ok("New ToDo Item added Successfully");
         }
 
         [HttpPut("Update")]
 
         public IActionResult UpdateTask([FromBody] NewToDoItem NewTask)
         {
+            IEnumerable<int> newTaskIds = NewTask.ListOfTasks.Select(t => t.TaskId);
+            IEnumerable<int> dbTaskIds = Enumerable.Empty<int>();
+
+            IActionResult result = GetById(NewTask.NewToDoItemId);
+            if (result is JsonResult jsonResult)
+            {
+                var jsonString = JsonSerializer.Serialize(jsonResult.Value); //convert obj to json string
+                if (!string.IsNullOrEmpty(jsonString))
+                {
+                    var newTask = JsonSerializer.Deserialize<NewToDoItem>(jsonString, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+                    dbTaskIds = newTask?.ListOfTasks?.Select(t => t.TaskId) ?? Enumerable.Empty<int>();
+                }
+
+            }
+
             var existingTask = dbContext.NewToDoItem.Include(t => t.ListOfTasks).FirstOrDefault(t => t.NewToDoItemId == NewTask.NewToDoItemId);
 
             if (existingTask != null && CheckTasksId(NewTask.NewToDoItemId))
@@ -47,8 +90,6 @@ namespace WebApplication2.Controllers
                 existingTask.IsDeleted = NewTask.IsDeleted;
                 existingTask.CreatedOn = NewTask.CreatedOn;
 
-                 List<int> missingTaskIds = new List<int>();
-
                 foreach (var subTask in NewTask.ListOfTasks)
                 {
                     var existing_Task = existingTask.ListOfTasks.FirstOrDefault(t => t.TaskId == subTask.TaskId);
@@ -57,11 +98,37 @@ namespace WebApplication2.Controllers
                         existing_Task.Task = subTask.Task;
                         existing_Task.Status = subTask.Status;
                         existing_Task.DueDate = subTask.DueDate;
+                        existing_Task.isTaskDeleted = subTask.isTaskDeleted;
                         dbContext.Update(existing_Task);
-                        dbContext.SaveChanges();
-                        return Ok("Task updated");
+
+                    }
+                    else if (existing_Task == null)
+                    {
+
+                        var newsubtask = new Tasks
+                        {
+                            TaskId = subTask.TaskId,
+                            NewToDoItemId = NewTask.NewToDoItemId,
+                            Task = subTask.Task,
+                            Status = subTask.Status,
+                            DueDate = subTask.DueDate,
+                            isTaskDeleted = subTask.isTaskDeleted
+                        };
+                        dbContext.Add(newsubtask);
+
                     }
                 }
+                List<int> toDeleteTaskIds = dbTaskIds.Except(newTaskIds).ToList();
+
+                foreach (var d in toDeleteTaskIds)
+                {
+                    var id = NewTask.ListOfTasks.FirstOrDefault(t => t.TaskId == d);
+                    if (id != null)
+                    {
+                        id.isTaskDeleted = true;
+                    }
+                }
+
                 dbContext.Update(existingTask);
                 dbContext.SaveChanges();
             }
@@ -96,6 +163,7 @@ namespace WebApplication2.Controllers
                 return NotFound();
             }
             existingTaskId.IsDeleted = true;
+            
             dbContext.SaveChanges();
             return Ok("Task marked as Deleted");
         }
@@ -132,6 +200,7 @@ namespace WebApplication2.Controllers
                             t.ToDoListName,
                             ListOfTasks = t.ListOfTasks.Select(t => new
                             {
+                                t.TaskId,
                                 t.Task,
                                 t.Status
                             })
